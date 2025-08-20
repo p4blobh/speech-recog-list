@@ -1,0 +1,97 @@
+import speech_recognition as sr
+import time
+import requests
+import base64
+import os
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+REPO = 'p4blobh/speech-recog-list'
+FILEPATH = 'savelist.txt'
+API_URL = f'https://api.github.com/repos/{REPO}/contents/{FILEPATH}'
+
+# Initialize recognizer class (for recognizing the speech)
+r = sr.Recognizer() 
+
+def update_github_file(new_message):
+    # Get current file content and SHA
+    headers = {'Authorization': f'token {GITHUB_TOKEN}'}
+    response = requests.get(API_URL, headers=headers)
+    if response.status_code == 200:
+        content = base64.b64decode(response.json()['content']).decode()
+        sha = response.json()['sha']
+    else:
+        content = ''
+        sha = None
+
+    # Append new message
+    updated_content = content + '\n' + new_message
+
+    # Prepare data for update
+    data = {
+        "message": "Update savelist.txt via speech recognition",
+        "content": base64.b64encode(updated_content.encode()).decode(),
+        "branch": "main"
+    }
+    if sha:
+        data["sha"] = sha
+
+    # Update file
+    put_response = requests.put(API_URL, headers=headers, json=data)
+    if put_response.status_code in [200, 201]:
+        print("File updated on GitHub!")
+    else:
+        print("Error updating file:", put_response.json())
+
+def addtolist():
+    file = open('savelist.txt', 'a')
+
+    with sr.Microphone() as source:
+        print("Talk")
+        audio_text = r.listen(source,timeout=10, phrase_time_limit=10)
+        print("Time over, thanks")
+        # recoginze_() method will throw a request
+        # error if the API is unreachable,
+        # hence using exception handling
+    
+    try:
+        # using google speech recognition
+        print("Text: "+r.recognize_google(audio_text))
+        message = r.recognize_google(audio_text)
+        update_github_file(message)   
+    except:
+         print("Sorry, I did not get that, please try again") 
+         time.sleep(3)
+         addtolist()
+    file.close()
+def removefromlist():
+    file = open('savelist.txt', 'r+')
+
+    with sr.Microphone() as source:
+        print("Talk")
+        audio_text = r.listen(source,timeout=10, phrase_time_limit=10)
+        print("Time over, thanks")
+        # recoginze_() method will throw a request
+        # error if the API is unreachable,
+        # hence using exception handling
+    
+    try:
+        # using google speech recognition
+        print("Text: "+r.recognize_google(audio_text))
+        message = r.recognize_google(audio_text)
+        lines = file.readlines()
+        file.seek(0)
+        for line in lines:
+            if message not in line:
+                file.write(line)
+            file.truncate()
+    except:
+         print("Sorry, I did not get that, please try again") 
+         time.sleep(1)
+         removefromlist()
+    file.close()
+
+action = input('What would you like to do? \n1)Write\n2)Remove\n')
+if action == '1':
+    addtolist()
+elif action =='2':
+    removefromlist()
+
