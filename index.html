@@ -1,10 +1,36 @@
 <!DOCTYPE html>
 <html>
-<body>
+<body style= "background-color:#24292e;">
+<style>
+	.txtfile{
+        background-color: #24292e;
+        color: #fafbfc;
+        font-family: monospace;
+        white-space: pre-wrap;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+
 <center>
-<h1> The following is in the list</h1>
+<h1 style="color:#fafbfc">Speech Recognition List </h1>
 </center>
 <br>
-<embed src="savelist.txt">
+<h2 style="color:#fafbfc"> The following is in the list:
+
+<br>
+<div id="listContent" class="txtfile"></div>
+
+<script>
+fetch('savelist.txt')
+  .then(response => response.text())
+  .then(text => {
+    document.getElementById('listContent').textContent = text;
+  })
+  .catch(error => {
+    document.getElementById('listContent').textContent = "Could not load list.";
+  });
+</script>
+
 </body>
 </html>
